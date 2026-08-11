@@ -1,1 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>CaloriesIA</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f5f7fb;
+      color: #172033;
+    }
+
+    header {
+      background: linear-gradient(135deg, #6c5ce7, #4834d4);
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+    }
+
+    .card h2 {
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    button {
+      border: none;
+      padding: 13px 20px;
+      border-radius: 10px;
+      background: #6c5ce7;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: #4834d4;
+    }
+
+    .results {
+      display: none;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .result-box {
+      background: #f1f0ff;
+      padding: 20px;
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .result-box strong {
+      display: block;
+      font-size: 28px;
+      color: #6c5ce7;
+      margin-top: 8px;
+    }
+
+    .plan {
+      margin-top: 20px;
+    }
+
+    .meal {
+      background: #f8f9fc;
+      border-left: 5px solid #6c5ce7;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .meal h3 {
+      margin-bottom: 5px;
+    }
+
+    .exercise {
+      background: #f8f9fc;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .disclaimer {
+      font-size: 13px;
+      color: #666;
+      margin-top: 15px;
+      line-height: 1.5;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #777;
+    }
+
+    @media (max-width: 700px) {
+      .form-grid,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      header h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>⚡ CaloriesIA</h1>
+  <p>Tu asistente inteligente para una alimentación y entrenamiento equilibrados</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>👤 Creá tu perfil</h2>
+
+    <div class="form-grid">
+
+      <div>
+        <label>Edad</label>
+        <input type="number" id="edad" placeholder="Ej: 16">
+      </div>
+
+      <div>
+        <label>Altura (cm)</label>
+        <input type="number" id="altura" placeholder="Ej: 177">
+      </div>
+
+      <div>
+        <label>Nivel de actividad</label>
+        <select id="actividad">
+          <option value="bajo">Bajo</option>
+          <option value="medio">Medio</option>
+          <option value="alto">Alto</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Objetivo</label>
+        <select id="objetivo">
+          <option value="salud">Alimentación equilibrada</option>
+          <option value="musculo">Acompañar entrenamiento y desarrollo muscular</option>
+          <option value="energia">Más energía para el día</option>
+        </select>
+      </div>
+
+    </div>
+
+    <button onclick="generarPlan()">✨ Generar mi plan</button>
+
+    <p class="disclaimer">
+      CaloriesIA ofrece orientación general y educativa. Las necesidades
+      nutricionales varían según cada persona, especialmente durante el crecimiento.
+    </p>
+  </div>
+
+
+  <div class="card results" id="resultados">
+
+    <h2>📊 Tu resumen</h2>
+
+    <div class="result-grid">
+
+      <div class="result-box">
+        Actividad
+        <strong id="actividadResultado">-</strong>
+      </div>
+
+      <div class="result-box">
+        Objetivo
+        <strong id="objetivoResultado">-</strong>
+      </div>
+
+      <div class="result-box">
+        Perfil
+        <strong id="perfilResultado">-</strong>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="card results" id="comidas">
+
+    <h2>🍽️ Ejemplo de alimentación</h2>
+
+    <div class="plan">
+
+      <div class="meal">
+        <h3>🌅 Desayuno</h3>
+        <p>Avena o cereal integral + fruta + yogur o leche.</p>
+      </div>
+
+      <div class="meal">
+        <h3>🥪 Media mañana</h3>
+        <p>Fruta + yogur, frutos secos o un sándwich.</p>
+      </div>
+
+      <div class="meal">
+        <h3>🍗 Almuerzo</h3>
+        <p>Una fuente de proteínas + arroz, pasta, papa u otro carbohidrato + verduras.</p>
+      </div>
+
+      <div class="meal">
+        <h3>🍎 Merienda</h3>
+        <p>Fruta + yogur/leche + tostadas o cereal.</p>
+      </div>
+
+      <div class="meal">
+        <h3>🌙 Cena</h3>
+        <p>Proteínas + carbohidratos + verduras, buscando variedad durante la semana.</p>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="card results" id="entrenamiento">
+
+    <h2>🏋️ Plan de entrenamiento</h2>
+
+    <div class="exercise">
+      <strong>Calentamiento</strong>
+      <p>5–10 minutos de movimiento suave y movilidad.</p>
+    </div>
+
+    <div class="exercise">
+      <strong>Fuerza</strong>
+      <p>Ejercicios adaptados a tu nivel, priorizando técnica y supervisión.</p>
+    </div>
+
+    <div class="exercise">
+      <strong>Deporte</strong>
+      <p>Basket, fútbol, correr, bicicleta u otra actividad que disfrutes.</p>
+    </div>
+
+    <div class="exercise">
+      <strong>Recuperación</strong>
+      <p>Descanso, hidratación y alimentación suficiente para acompañar el entrenamiento.</p>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  © 2026 CaloriesIA — Alimentación • Entrenamiento • Bienestar
+</footer>
+
+
+<script>
+
+function generarPlan() {
+
+  const edad = document.getElementById("edad").value;
+  const altura = document.getElementById("altura").value;
+  const actividad = document.getElementById("actividad").value;
+  const objetivo = document.getElementById("objetivo").value;
+
+  if (!edad || !altura) {
+    alert("Completá tu edad y altura primero.");
+    return;
+  }
+
+  document.getElementById("resultados").style.display = "block";
+  document.getElementById("comidas").style.display = "block";
+  document.getElementById("entrenamiento").style.display = "block";
+
+  const actividadTexto = {
+    bajo: "Baja",
+    medio: "Media",
+    alto: "Alta"
+  };
+
+  const objetivoTexto = {
+    salud: "Equilibrio",
+    musculo: "Entrenamiento",
+    energia: "Energía"
+  };
+
+  document.getElementById("actividadResultado").textContent =
+    actividadTexto[actividad];
+
+  document.getElementById("objetivoResultado").textContent =
+    objetivoTexto[objetivo];
+
+  document.getElementById("perfilResultado").textContent =
+    edad + " años";
+
+  window.scrollTo({
+    top: document.getElementById("resultados").offsetTop - 20,
+    behavior: "smooth"
+  });
+}
+
+</script>
+
+</body>
+</html>
