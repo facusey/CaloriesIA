@@ -22,4 +22,89 @@ function addFood(){const n=document.getElementById('name').value.trim(),c=Number
 function previewPhoto(e){const file=e.target.files[0];if(!file)return;const img=document.getElementById('preview');img.src=URL.createObjectURL(file);img.style.display='block';document.getElementById('aiResult').style.display='block';document.getElementById('aiResult').innerHTML='<strong>Foto lista ✓</strong><br><span class="muted">La imagen está preparada para el análisis. Para que la IA realmente identifique la comida y estime kcal hay que conectar un backend de visión seguro.</span>'}
 function render(){const foods=today(),total=foods.reduce((a,x)=>a+x.cal,0);document.getElementById('total').textContent=Math.round(total);document.getElementById('calStat').textContent=Math.round(total)+' kcal';document.getElementById('mealStat').textContent=foods.length;document.getElementById('avgStat').textContent=(foods.length?Math.round(total/foods.length):0)+' kcal';document.getElementById('count').textContent=foods.length+' alimento'+(foods.length===1?'':'s');const deg=Math.min(total/2500*360,360);document.getElementById('ring').style.background=`conic-gradient(var(--primary) 0deg ${deg}deg,#e9ebf2 ${deg}deg 360deg)`;document.getElementById('foodList').innerHTML=foods.length?foods.map(x=>`<div class="food"><div><div class="foodname">${esc(x.name)}</div><div class="foodmeta">${x.grams?x.grams+' g':'Cantidad no indicada'}</div></div><div class="cal">${Math.round(x.cal)} kcal <button class="x" onclick="removeFood(${x.id})">×</button></div></div>`).join(''):'<div class="empty">Todavía no registraste alimentos hoy.</div>';renderHistory()}
 function renderHistory(){const h=document.getElementById('history'),keys=Object.keys(data).sort().reverse();h.innerHTML=keys.length?keys.slice(0,14).map(k=>{const t=data[k].reduce((a,x)=>a+x.cal,0);return `<div class="day"><span>${new Date(k+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'2-digit',month:'short'})}</span><b>${Math.round(t)} kcal</b></div>`}).join(''):'<div class="empty">Tu historial aparecerá acá.</div>'}document.getElementById('date').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});render();
+<!-- Componente de Autocompletado de Alimentos -->
+<script>
+  // Base de datos de alimentos sugeridos por cada 100g
+  const ALIMENTOS_DB = [
+    { name: "Pollo (pechuga)", calories: 165, protein: 31, carbs: 0, fats: 3.6 },
+    { name: "Pollo (muslo)", calories: 209, protein: 26, carbs: 0, fats: 10.9 },
+    { name: "Carne vacuna magra", calories: 250, protein: 26, carbs: 0, fats: 15 },
+    { name: "Arroz blanco cocido", calories: 130, protein: 2.7, carbs: 28, fats: 0.3 },
+    { name: "Huevo entero", calories: 155, protein: 13, carbs: 1.1, fats: 11 },
+    { name: "Avena", calories: 389, protein: 16.9, carbs: 66, fats: 6.9 },
+    { name: "Banana", calories: 89, protein: 1.1, carbs: 23, fats: 0.3 },
+    { name: "Manzana", calories: 52, protein: 0.3, carbs: 14, fats: 0.2 },
+    { name: "Papa cocida", calories: 87, protein: 1.9, carbs: 20, fats: 0.1 },
+    { name: "Atún en agua", calories: 116, protein: 26, carbs: 0, fats: 1 }
+  ];
 
+  document.addEventListener("DOMContentLoaded", () => {
+    // Busca el campo donde se ingresa el nombre de la comida
+    const inputFood = document.querySelector('input[placeholder*="Pollo"]') || document.querySelector('input[type="text"]');
+    
+    if (inputFood) {
+      // Crea el contenedor de las sugerencias
+      const suggestionsBox = document.createElement("ul");
+      suggestionsBox.style.cssText = `
+        position: absolute;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        list-style: none;
+        margin: 4px 0 0 0;
+        padding: 4px;
+        z-index: 9999;
+        max-height: 200px;
+        overflow-y: auto;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        display: none;
+        width: ${inputFood.offsetWidth}px;
+      `;
+      
+      inputFood.parentNode.style.position = "relative";
+      inputFood.parentNode.appendChild(suggestionsBox);
+
+      // Escucha lo que escribe el usuario
+      inputFood.addEventListener("input", (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        suggestionsBox.innerHTML = "";
+
+        if (val.length === 0) {
+          suggestionsBox.style.display = "none";
+          return;
+        }
+
+        const matches = ALIMENTOS_DB.filter(item => item.name.toLowerCase().includes(val));
+
+        if (matches.length > 0) {
+          matches.forEach(item => {
+            const li = document.createElement("li");
+            li.style.cssText = "padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; font-size: 14px;";
+            li.innerHTML = `<strong>${item.name}</strong> <span style="color: #64748b;">${item.calories} kcal / 100g</span>`;
+            
+            li.addEventListener("click", () => {
+              inputFood.value = item.name;
+              suggestionsBox.style.display = "none";
+              
+              // Evento personalizado por si querés capturar los macronutrientes del alimento seleccionado
+              const event = new CustomEvent("foodSelected", { detail: item });
+              document.dispatchEvent(event);
+            });
+
+            suggestionsBox.appendChild(li);
+          });
+          suggestionsBox.style.display = "block";
+        } else {
+          suggestionsBox.style.display = "none";
+        }
+      });
+
+      // Ocultar al hacer clic afuera
+      document.addEventListener("click", (e) => {
+        if (!inputFood.contains(e.target) && !suggestionsBox.contains(e.target)) {
+          suggestionsBox.style.display = "none";
+        }
+      });
+    }
+  });
+</script>
